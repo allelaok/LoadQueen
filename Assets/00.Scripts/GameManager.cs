@@ -35,7 +35,7 @@ public class GameManager : MonoBehaviour
     Player player;
     Camera cam;
 
-    float speed = 3f;
+    float speed = 2f;
     int life = 3;
     float interval = 0.2f;
 
