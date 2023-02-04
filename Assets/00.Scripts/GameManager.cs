@@ -8,6 +8,10 @@ public enum STATE
     Ready,
     Start,
     Play,
+    Defualt,
+    CamMove,
+    Tornado,
+    Subway,
     Die,
     GameOver
 }
@@ -16,6 +20,7 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     private void Awake()
     {
+        Screen.SetResolution(1080, 1920, false);
         if (instance == null)
         {
             instance = this;
@@ -28,33 +33,66 @@ public class GameManager : MonoBehaviour
 
     public float Speed { get { return speed; } }
     public float Interval { get { return interval; } }
-    public int Life { get { return life; } }
+    public int LifeCnt { get { return lifeCnt; } }
+    public int TornadoCnt { get { return tornadoCnt; } }
     //public STATE State { set { state = value; }  get { return state; } }
-    public GameObject startPanel;
+    public GameObject loginPanel;
 
-    Player player;
-    Camera cam;
-
+    public Player player;
+    [SerializeField]
     float speed = 2f;
-    int life = 3;
+    int lifeCnt = 3;
+    int tornadoCnt = 3;
     float interval = 0.2f;
 
     [SerializeField]
     Image arrow;
     public Transform nowTarget;
 
+    [SerializeField]
+    Transform[] springPositions;
+    Dictionary<Transform, Transform[]> springPos = new Dictionary<Transform, Transform[]>();
+    //public FirebaseManager loginManager;
+
+    public bool lastColl;
+
     // Start is called before the first frame update
     void Start()
     {
-        startPanel.SetActive(true);
+        loginPanel.SetActive(true);
         player = FindObjectOfType<Player>();
         player.state = STATE.Ready;
-        cam = player.GetComponentInChildren<Camera>();
+
+        for(int i = 0; i < springs.Length; i++)
+        {
+            if(springPos.ContainsKey(springs[i]) == false)
+            {
+                before.Add(springs[i], -1);
+                springPos.Add(springs[i], springPositions[i].GetComponentsInChildren<Transform>());
+                SetSpring(springs[i]);
+            }
+        }
     }
 
-    public void OnClick_Start()
+    Dictionary<Transform, int> before = new Dictionary<Transform, int>();
+    [SerializeField]
+    Transform[] springs;
+    public void SetSpring(Transform spring)
     {
-        startPanel.SetActive(false);
+        int idx = Random.Range(1, springPos[spring].Length);
+        while (idx == before[spring])
+        {
+            idx = Random.Range(1, springPos[spring].Length);
+        }
+
+        spring.position = springPos[spring][idx].position;
+        spring.rotation = Quaternion.identity;
+        before[spring] = idx;
+    }
+
+    public void GameStart()
+    {
+        loginPanel.SetActive(false);
         player.state = STATE.Ready;
     }
 
@@ -76,6 +114,25 @@ public class GameManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        cam.transform.up = Vector3.forward;
+        player.cam.transform.up = Vector3.forward;
+    }
+    [HideInInspector]
+    public bool turnLeft;
+    [HideInInspector]
+    public bool turnRight;
+    [HideInInspector]
+    public bool tornado;
+    public void OnClickLeftBtn()
+    {
+        print("emfdj");
+        turnLeft = true;
+    }
+    public void OnClickRightBtn()
+    {
+        turnRight = true;
+    }
+    public void OnClickTornado()
+    {
+        tornado = true;
     }
 }
