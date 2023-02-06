@@ -24,7 +24,8 @@ public class Player : MonoBehaviour
     [SerializeField]
     TMPro.TMP_Text fScore;
     //[SerializeField]
-    List<Transform> PlayerAndHeart = new List<Transform>();
+    //List<Transform> PlayerAndHeart = new List<Transform>();
+    List<Heart> hearts = new List<Heart>();
     [SerializeField]
     GameObject heartPool;
     SpriteRenderer animSprite;
@@ -46,7 +47,7 @@ public class Player : MonoBehaviour
         state = STATE.Defualt;
         fScore.text = "";
         animSprite = GetComponentInChildren<SpriteRenderer>();
-        PlayerAndHeart.Add(transform);
+        //PlayerAndHeart.Add(transform);
         inversedTime = inverseTime;
         heartPos = heartPositions.GetComponentsInChildren<Transform>();
         subways = subwayPool.GetComponentsInChildren<Transform>();
@@ -117,10 +118,10 @@ public class Player : MonoBehaviour
     List<int> targetIndx = new List<int>();
     public void Move()
     {
-            //transform.position += transform.forward * GameManager.instance.Speed * Time.deltaTime;
-        for (int i = 0; i < PlayerAndHeart.Count - 1; i++)
-        {
-            PlayerAndHeart[i].position += PlayerAndHeart[i].forward * GameManager.instance.Speed * Time.deltaTime;
+        transform.position += transform.forward * GameManager.instance.Speed * Time.deltaTime;
+        //for (int i = 0; i < hearts.Count; i++)
+        //{
+        //    hearts[i].transform.position += hearts[i].transform.forward * GameManager.instance.Speed * Time.deltaTime;
 
             //Vector3 targetPos;
             //if (targetIndx[i] < target.Count)
@@ -143,20 +144,33 @@ public class Player : MonoBehaviour
             //        }
             //    }
             //}
-        }
+        //}
 
         if (Input.GetKeyDown(KeyCode.A) || GameManager.instance.turnLeft)
         {
-            //transform.rotation *= Quaternion.Euler(new Vector3(0, -1 * inverse * 45, 0));
+            transform.rotation *= Quaternion.Euler(new Vector3(0, -1 * inverse * 45, 0));
             //target.Add(transform.position);
-            StartCoroutine(PetRot(0, -1 * inverse));
+            //StartCoroutine(PetRot(0, -1 * inverse));
+            for(int i = 0; i < hearts.Count; i++)
+            {
+                if (i - 1 < 0)
+                {
+                    TurnInfo info = new TurnInfo(transform.position, transform.forward);
+                    hearts[i].targets.Enqueue(info);
+                }
+            }
             GameManager.instance.turnLeft = false;
         }
         else if(Input.GetKeyDown(KeyCode.D) || GameManager.instance.turnRight)
         {
             //target.Add(transform.position);
-            //transform.rotation *= Quaternion.Euler(new Vector3(0, inverse * 45, 0));
-            StartCoroutine(PetRot(0, 1 * inverse));
+            transform.rotation *= Quaternion.Euler(new Vector3(0, inverse * 45, 0));
+            for (int i = 0; i < hearts.Count; i++)
+            {
+                TurnInfo info = new TurnInfo(transform.position, transform.forward);
+                hearts[i].targets.Enqueue(info);
+            }
+            //StartCoroutine(PetRot(0, 1 * inverse));
             GameManager.instance.turnRight = false;
         }
         else if (Input.GetKeyDown(KeyCode.Space) || GameManager.instance.tornado)
@@ -189,7 +203,7 @@ public class Player : MonoBehaviour
 
     void SelectSubway(Transform beforeSubway = null)
     {
-            transform.GetComponentInChildren<SpriteRenderer>().enabled = false;
+        transform.GetComponentInChildren<SpriteRenderer>().enabled = false;
         int subwayIdx = Random.Range(1, subways.Length);
         if (beforeSubway != null)
         {
@@ -214,18 +228,22 @@ public class Player : MonoBehaviour
             transform.GetComponentInChildren<SpriteRenderer>().enabled = true;
             state = STATE.Play;
             StopAllCoroutines();
+            for(int i = 0; i< hearts.Count; i++)
+            {
+                hearts[i].targets.Clear();
+            }
             StartCoroutine(PetSubway(0, subways[subwayIdx]));
         }
     }
 
     IEnumerator PetRot(int petIdx, int right)
     {
-        if (petIdx < PlayerAndHeart.Count)
+        if (petIdx < hearts.Count)
         {
-            PlayerAndHeart[petIdx].rotation *= Quaternion.Euler(new Vector3(0, right * 45, 0));
-            if (++petIdx < PlayerAndHeart.Count - 1)
-            {
                 yield return new WaitForSeconds(GameManager.instance.Interval);
+            hearts[petIdx].transform.rotation *= Quaternion.Euler(new Vector3(0, right * 45, 0));
+            if (++petIdx < hearts.Count)
+            {
                 StartCoroutine(PetRot(petIdx, right));
             }
         }
@@ -261,17 +279,22 @@ public class Player : MonoBehaviour
         if (other.gameObject.layer == LayerMask.NameToLayer("Heart"))
         {
             other.gameObject.layer = LayerMask.NameToLayer("Default");
-            if (PlayerAndHeart.Count == 1)
+
+            Heart heart = other.gameObject.AddComponent<Heart>();
+            if (hearts.Count == 0)
             {
                 other.transform.position = transform.position - transform.forward * GameManager.instance.Speed * GameManager.instance.Interval;
                 other.transform.rotation = transform.rotation;
+                //heart.targets = new Queue<Vector3>();
             }
             else
             {
-                Transform lastPet = PlayerAndHeart[PlayerAndHeart.Count - 2];
-                other.transform.position = lastPet.position - lastPet.forward * GameManager.instance.Speed * GameManager.instance.Interval;
-                other.transform.rotation = lastPet.rotation;
+                Heart lastHeart = hearts[hearts.Count - 1];
+                heart.targets = new Queue<TurnInfo>(lastHeart.targets);
+                other.transform.position = lastHeart.transform.position - lastHeart.transform.forward * GameManager.instance.Speed * GameManager.instance.Interval;
+                other.transform.rotation = lastHeart.transform.rotation;
             }
+            hearts.Add(heart);
             score += point;
             if (score > bestScore)
                 bestScoreText.text = score.ToString();
@@ -282,8 +305,6 @@ public class Player : MonoBehaviour
             //else
             //    targetIndx.Add(targetIndx[targetIndx.Count - 1] - 1);
 
-            Heart haert = other.gameObject.AddComponent<Heart>();
-             
 
             CreateHeart();
         }
@@ -333,17 +354,18 @@ public class Player : MonoBehaviour
 
     IEnumerator PetSubway(int petIdx, Transform pos)
     {
-        if (petIdx < PlayerAndHeart.Count - 1)
+        yield return new WaitForSeconds(GameManager.instance.Interval);
+        if (petIdx < hearts.Count)
         {
-            PlayerAndHeart[petIdx].position = pos.position;
-            PlayerAndHeart[petIdx].rotation = pos.rotation;
-            if (++petIdx < PlayerAndHeart.Count - 1)
+            hearts[petIdx].transform.position = pos.position;
+            hearts[petIdx].transform.rotation = pos.rotation;
+            if (++petIdx < hearts.Count)
             {
-                yield return new WaitForSeconds(GameManager.instance.Interval);
                 StartCoroutine(PetSubway(petIdx, pos));
             }
         }
     }
+
     float inverseTime = 5f;
     float inversedTime;
     void InverseTime()
@@ -353,29 +375,28 @@ public class Player : MonoBehaviour
 
         if (inversedTime >= inverseTime)
         {
-            //animSprite.color = new Color(1, 1, 1, 1);
+            animSprite.color = new Color(1, 1, 1, 1);
             inverse = 1;
             anim.SetInteger("Inverse", inverse);
         }
-        //else
-        //{
-            //if (inversedTime % 0.5f < 0.25f)
-            //    animSprite.color = new Color(1, 1, 1, 0.5f);
-            //else
-            //    animSprite.color = new Color(1, 1, 1, 1);
-            //inversedTime += Time.deltaTime;
-        //}
+        else
+        {
+            if (inversedTime % 0.5f < 0.25f)
+                animSprite.color = new Color(1, 1, 1, 0.5f);
+            else
+                animSprite.color = new Color(1, 1, 1, 1);
+            inversedTime += Time.deltaTime;
+        }
     }
 
 
     void DestroyAllHearts()
     {
-        for (int i = 1; i < PlayerAndHeart.Count; i++)
+        for (int i = 1; i < hearts.Count; i++)
         {
-            Destroy(PlayerAndHeart[i].gameObject);
+            Destroy(hearts[i].gameObject);
         }
-        PlayerAndHeart.Clear();
-        PlayerAndHeart.Add(transform);
+        hearts.Clear();
     }
 
     [SerializeField]
@@ -396,7 +417,6 @@ public class Player : MonoBehaviour
         heartPrefab.SetParent(null, true);
         heartPrefab.position = heartPos[idx].position;
         heartPrefab.rotation = Quaternion.identity;
-        PlayerAndHeart.Add(heartPrefab.transform);
         GameManager.instance.nowTarget = heartPrefab;
     }
 
