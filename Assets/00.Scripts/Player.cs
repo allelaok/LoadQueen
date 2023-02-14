@@ -14,18 +14,16 @@ public class Player : MonoBehaviour
     int score;
     int point = 1;
     [SerializeField]
-    Text scoreText;
+    TMPro.TMP_Text scoreText;
     [SerializeField]
-    Text bestScoreText;
+    TMPro.TMP_Text bestScoreText;
     [SerializeField]
     Image[] lifeImg;
     [SerializeField]
     Image[] tornadoImg;
-    [SerializeField]
-    TMPro.TMP_Text fScore;
     //[SerializeField]
     //List<Transform> PlayerAndHeart = new List<Transform>();
-    List<Heart> hearts = new List<Heart>();
+    List<Transform> hearts = new List<Transform>();
     [SerializeField]
     GameObject heartPool;
     SpriteRenderer animSprite;
@@ -40,12 +38,12 @@ public class Player : MonoBehaviour
     Animator anim;
     Vector3 initSize;
     int inverse = 1;
-    int bestScore;
+    //public Transform[] hearts;
+    public List<Vector3> points;
 
     private void Start()
     {
         state = STATE.Defualt;
-        fScore.text = "";
         animSprite = GetComponentInChildren<SpriteRenderer>();
         //PlayerAndHeart.Add(transform);
         inversedTime = inverseTime;
@@ -82,17 +80,17 @@ public class Player : MonoBehaviour
             case (STATE.GameOver):
                 break;
         }
-        
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            PlayerPrefs.SetInt("BestScore", 0);
-        }
+    }
+
+    private void LateUpdate()
+    {
+        SetHeartsPosition(1, 0);
     }
 
     void Ready()
     {
-            tornado.gameObject.SetActive(false);
-        for(int i = 0; i < GameManager.instance.LifeCnt; i++)
+        tornado.gameObject.SetActive(false);
+        for (int i = 0; i < GameManager.instance.LifeCnt; i++)
         {
             lifeImg[i].enabled = true;
         }
@@ -108,69 +106,33 @@ public class Player : MonoBehaviour
         tornadoCnt = GameManager.instance.TornadoCnt;
         dieCnt = 0;
         state = STATE.Play;
-        bestScore = PlayerPrefs.GetInt("BestScore");
-        bestScoreText.text = bestScore.ToString();
+        bestScoreText.text = GameManager.instance.bestScore.ToString();
         targetIndx.Clear();
-        target.Clear();
+        points.Clear();
+        points.Add(transform.position);
+        //target.Clear();
+        inverse = 1;
+        GameManager.instance.Speed = GameManager.instance.baseSpeed;
     }
 
-    List<Vector3> target = new List<Vector3>();
+    //List<Vector3> target = new List<Vector3>();
     List<int> targetIndx = new List<int>();
     public void Move()
     {
         transform.position += transform.forward * GameManager.instance.Speed * Time.deltaTime;
-        //for (int i = 0; i < hearts.Count; i++)
-        //{
-        //    hearts[i].transform.position += hearts[i].transform.forward * GameManager.instance.Speed * Time.deltaTime;
-
-            //Vector3 targetPos;
-            //if (targetIndx[i] < target.Count)
-            //    targetPos = target[targetIndx[i]];
-            //else if (targetIndx[i] < 0)
-            //    targetPos = hearts[i - 1].position;
-            //else
-            //    targetPos = transform.position;
-
-            //    hearts[i].position = Vector3.MoveTowards(hearts[i].position, targetPos, GameManager.instance.Speed * Time.deltaTime);
-
-            //if (hearts[i].position == targetPos)
-            //{
-            //    targetIndx[i]++;
-            //    if(i == hearts.Count - 2)
-            //    {
-            //        for(int j = 0; j < targetIndx.Count; j++)
-            //        {
-            //            targetIndx[j]--;
-            //        }
-            //    }
-            //}
-        //}
 
         if (Input.GetKeyDown(KeyCode.A) || GameManager.instance.turnLeft)
         {
             transform.rotation *= Quaternion.Euler(new Vector3(0, -1 * inverse * 45, 0));
-            //target.Add(transform.position);
-            //StartCoroutine(PetRot(0, -1 * inverse));
-            for(int i = 0; i < hearts.Count; i++)
-            {
-                if (i - 1 < 0)
-                {
-                    TurnInfo info = new TurnInfo(transform.position, transform.forward);
-                    hearts[i].targets.Enqueue(info);
-                }
-            }
+            points.Add(transform.position);
+
             GameManager.instance.turnLeft = false;
         }
         else if(Input.GetKeyDown(KeyCode.D) || GameManager.instance.turnRight)
         {
-            //target.Add(transform.position);
             transform.rotation *= Quaternion.Euler(new Vector3(0, inverse * 45, 0));
-            for (int i = 0; i < hearts.Count; i++)
-            {
-                TurnInfo info = new TurnInfo(transform.position, transform.forward);
-                hearts[i].targets.Enqueue(info);
-            }
-            //StartCoroutine(PetRot(0, 1 * inverse));
+            points.Add(transform.position);
+
             GameManager.instance.turnRight = false;
         }
         else if (Input.GetKeyDown(KeyCode.Space) || GameManager.instance.tornado)
@@ -185,7 +147,90 @@ public class Player : MonoBehaviour
         }
     }
 
-    
+    void SetHeartsPosition(int pointIdx, int heartIdx, bool pointDis = true, float tmpDis = 0)
+    {
+        if(points.Count == 0)
+        {
+            // 모든 하트 안보이는 곳으로
+            for (int i = 0; i < hearts.Count; i++)
+                hearts[i].position = Vector3.one * -1;
+        }
+        if (points.Count == 1)
+        {
+            float dis = Vector3.Distance(transform.position, points[0]);
+            // 플레이어 위치부터 모든 하트 나열
+            for (int i = 0; i < hearts.Count; i++)
+            {
+                if (dis > 2 * (i + 1) * 0.5f)
+                    hearts[i].position = transform.position - transform.forward * 2 * (i + 1) * 0.5f;
+                else
+                    hearts[i].position = Vector3.one * -1;
+            }
+        }
+        else if (points.Count > pointIdx - 1 && hearts.Count > heartIdx)
+        {
+            // 현재 포인트와 다음 포인트의 거리
+            float dis;
+            if (pointDis)
+            {
+                if (pointIdx == 1)
+                    dis = Vector3.Distance(transform.position, points[points.Count - pointIdx]);
+                else
+                    dis = Vector3.Distance(points[points.Count - pointIdx + 1], points[points.Count - pointIdx]);
+            }
+            else
+            {
+                dis = Vector3.Distance(hearts[heartIdx - 1].position, points[points.Count - pointIdx]);
+            }
+
+            // 거리가 부족한 경우
+            if (dis < 2 * 0.5f - tmpDis)
+            {
+                pointIdx++;
+                SetHeartsPosition(pointIdx, heartIdx, true, dis + tmpDis);
+            }
+            // 거리를 충족한 경우
+            else
+            {
+                Vector3 pos;
+                Vector3 forword;
+                if (pointDis)
+                {
+                    if (pointIdx == 1)
+                    {
+                        pos = Vector3.Lerp(transform.position, points[points.Count - pointIdx], (2 * 0.5f - tmpDis) / dis);
+                        forword = transform.position - points[points.Count - pointIdx];
+                    }
+                    else
+                    {
+                        pos = Vector3.Lerp(points[points.Count - pointIdx + 1], points[points.Count - pointIdx], (2 * 0.5f - tmpDis) / dis);
+                        forword = points[points.Count - pointIdx + 1] - points[points.Count - pointIdx];
+
+                    }
+                }
+                else
+                {
+                    pos = hearts[heartIdx - 1].position - hearts[heartIdx - 1].forward * 2 * 0.5f;
+                    forword = hearts[heartIdx - 1].forward;
+                }
+
+                // 하트 배치
+                hearts[heartIdx].position = pos;
+                hearts[heartIdx].forward = forword;
+                heartIdx++;
+                if (hearts.Count > heartIdx)
+                    SetHeartsPosition(pointIdx, heartIdx, false);
+                else
+                {
+                    // 나머지 포인트 삭제
+                    for (int i = points.Count - pointIdx - 1; i > -1; i--)
+                    {
+                        points.RemoveAt(i);
+                    }
+                }
+            }
+        }
+    }
     void Tornado()
     {
         if (tornado.gameObject.activeSelf == false)
@@ -213,44 +258,28 @@ public class Player : MonoBehaviour
             }
         }
         subways[subwayIdx].gameObject.layer = LayerMask.NameToLayer("SelectedSubway");
-        this.subwayIdx = subwayIdx;
-        target.Add(subways[subwayIdx].position);
-
+        target = subways[subwayIdx];
+        points.Clear();
         state = STATE.CamMove;
     }
 
-    int subwayIdx;
+    Transform target;
     void CamMove()
     {
-        transform.position += (subways[subwayIdx].position - transform.position).normalized * GameManager.instance.Speed * 3 * Time.deltaTime;
-        if (Vector3.Distance(transform.position, subways[subwayIdx].position) < 0.5f)
+        transform.position += (target.position - transform.position).normalized * GameManager.instance.Speed * 10 * Time.deltaTime;
+
+        if (Vector3.Distance(transform.position, target.position) < 0.5f)
         {
+            transform.forward = target.forward;
+            points.Add(target.position);
             transform.GetComponentInChildren<SpriteRenderer>().enabled = true;
             state = STATE.Play;
-            StopAllCoroutines();
-            for(int i = 0; i< hearts.Count; i++)
-            {
-                hearts[i].targets.Clear();
-            }
-            StartCoroutine(PetSubway(0, subways[subwayIdx]));
         }
     }
 
-    IEnumerator PetRot(int petIdx, int right)
-    {
-        if (petIdx < hearts.Count)
-        {
-                yield return new WaitForSeconds(GameManager.instance.Interval);
-            hearts[petIdx].transform.rotation *= Quaternion.Euler(new Vector3(0, right * 45, 0));
-            if (++petIdx < hearts.Count)
-            {
-                StartCoroutine(PetRot(petIdx, right));
-            }
-        }
-    }
     void initPos()
     {
-            inverse = 1;
+        inverse = 1;
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
     }
@@ -275,59 +304,40 @@ public class Player : MonoBehaviour
                 GameOver();
             }
         }
-
-        if (other.gameObject.layer == LayerMask.NameToLayer("Heart"))
+        else if (other.gameObject.layer == LayerMask.NameToLayer("Heart"))
         {
             other.gameObject.layer = LayerMask.NameToLayer("Default");
 
-            Heart heart = other.gameObject.AddComponent<Heart>();
-            if (hearts.Count == 0)
-            {
-                other.transform.position = transform.position - transform.forward * GameManager.instance.Speed * GameManager.instance.Interval;
-                other.transform.rotation = transform.rotation;
-                //heart.targets = new Queue<Vector3>();
-            }
-            else
-            {
-                Heart lastHeart = hearts[hearts.Count - 1];
-                heart.targets = new Queue<TurnInfo>(lastHeart.targets);
-                other.transform.position = lastHeart.transform.position - lastHeart.transform.forward * GameManager.instance.Speed * GameManager.instance.Interval;
-                other.transform.rotation = lastHeart.transform.rotation;
-            }
-            hearts.Add(heart);
+            hearts.Add(other.transform);
+
+            // 점수 기록
             score += point;
-            if (score > bestScore)
+            GameManager.instance.Speed = GameManager.instance.baseSpeed * (hearts.Count + 1) * 0.2f;
+            if (score > GameManager.instance.bestScore)
                 bestScoreText.text = score.ToString();
             scoreText.text = score.ToString();
 
-            //if (targetIndx.Count - 1 < 0)
-            //    targetIndx.Add(target.Count);
-            //else
-            //    targetIndx.Add(targetIndx[targetIndx.Count - 1] - 1);
-
-
             CreateHeart();
         }
-
-        if (other.gameObject.layer == LayerMask.NameToLayer("RedCapsule"))
+        else if (other.gameObject.layer == LayerMask.NameToLayer("RedCapsule"))
         {
             inversedTime = 0;
             inverse = -1;
             anim.SetInteger("Inverse", inverse);
             GameManager.instance.SetSpring(other.transform);
         }
-
-        if (other.gameObject.layer == LayerMask.NameToLayer("Subway"))
+        else if (other.gameObject.layer == LayerMask.NameToLayer("Subway"))
         {
             SelectSubway(other.transform);
         }
-
-        if(other.gameObject.layer == LayerMask.NameToLayer("Stair"))
+        else if (other.gameObject.layer == LayerMask.NameToLayer("Stair"))
         {
             Stair stair = other.transform.GetComponent<Stair>();
             stair.otherStair.gameObject.layer = LayerMask.NameToLayer("SelectedStair");
-            StopAllCoroutines();
-            StartCoroutine(PetSubway(0, stair.otherStair));
+            transform.GetComponentInChildren<SpriteRenderer>().enabled = false;
+            target = stair.otherStair.transform;
+            points.Clear();
+            state = STATE.CamMove;
         }
     }
 
@@ -343,34 +353,19 @@ public class Player : MonoBehaviour
             other.gameObject.layer = LayerMask.NameToLayer("Stair");
         }
     }
-    IEnumerator Subway(int petIdx, Transform pos)
-    {
-        transform.position = pos.position;
-        transform.rotation = pos.rotation;
-
-        yield return new WaitForSeconds(GameManager.instance.Interval);
-        StartCoroutine(PetSubway(petIdx, pos));
-    }
-
-    IEnumerator PetSubway(int petIdx, Transform pos)
-    {
-        yield return new WaitForSeconds(GameManager.instance.Interval);
-        if (petIdx < hearts.Count)
-        {
-            hearts[petIdx].transform.position = pos.position;
-            hearts[petIdx].transform.rotation = pos.rotation;
-            if (++petIdx < hearts.Count)
-            {
-                StartCoroutine(PetSubway(petIdx, pos));
-            }
-        }
-    }
 
     float inverseTime = 5f;
     float inversedTime;
     void InverseTime()
     {
-        if (inverse == 1) return;
+        if (inverse == 1) 
+        {
+            inverseTime = 5f;
+            animSprite.color = new Color(1, 1, 1, 1);
+            anim.SetInteger("Inverse", inverse);
+            return;
+        }
+
         inversedTime += Time.deltaTime;
 
         if (inversedTime >= inverseTime)
@@ -392,9 +387,13 @@ public class Player : MonoBehaviour
 
     void DestroyAllHearts()
     {
-        for (int i = 1; i < hearts.Count; i++)
+        for (int i = 0; i < hearts.Count; i++)
         {
             Destroy(hearts[i].gameObject);
+        }
+        if (nowHeart)
+        {
+            Destroy(nowHeart.gameObject);
         }
         hearts.Clear();
     }
@@ -405,6 +404,7 @@ public class Player : MonoBehaviour
 
     int beforePosIndx = 0;
     int idx;
+    GameObject nowHeart;
     void CreateHeart()
     {
         idx = Random.Range(1, heartPos.Length);
@@ -417,6 +417,7 @@ public class Player : MonoBehaviour
         heartPrefab.SetParent(null, true);
         heartPrefab.position = heartPos[idx].position;
         heartPrefab.rotation = Quaternion.identity;
+        nowHeart = heartPrefab.gameObject;
         GameManager.instance.nowTarget = heartPrefab;
     }
 
@@ -424,12 +425,10 @@ public class Player : MonoBehaviour
     private void GameOver()
     {
         state = STATE.GameOver;
-        fScore.text = score.ToString();
-        GameManager.instance.loginPanel.SetActive(true);
-        //FirebaseManager.instance.SaveScore(score);
+        GameManager.instance.GameOver();
+        FirebaseManager.instance.SaveScore(score);
+        inverse = 1;
         print("GameOver");
-        if(score > bestScore)
-            PlayerPrefs.SetInt("BestScore", score);
     }
 
 }

@@ -31,12 +31,13 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public float Speed { get { return speed; } }
+    public float Speed { get { return speed; }  set { } }
+    public float baseSpeed { get { return 20; } }
     public float Interval { get { return interval; } }
     public int LifeCnt { get { return lifeCnt; } }
     public int TornadoCnt { get { return tornadoCnt; } }
     //public STATE State { set { state = value; }  get { return state; } }
-    public GameObject loginPanel;
+    //public GameObject loginPanel;
 
     public Player player;
     [SerializeField]
@@ -44,6 +45,7 @@ public class GameManager : MonoBehaviour
     int lifeCnt = 3;
     int tornadoCnt = 3;
     float interval = 0.2f;
+    public int bestScore;
 
     [SerializeField]
     Image arrow;
@@ -56,10 +58,21 @@ public class GameManager : MonoBehaviour
 
     public bool lastColl;
 
+    Dictionary<Transform, int> before = new Dictionary<Transform, int>();
+    [SerializeField]
+    Transform[] springs;
+
+    public string userId;
+    public string password;
+    [SerializeField]
+    GameObject startCanvas;
+    [SerializeField]
+    GameObject startPanel;
+    [SerializeField]
+    GameObject loginPanel;
     // Start is called before the first frame update
     void Start()
     {
-        loginPanel.SetActive(true);
         player = FindObjectOfType<Player>();
         player.state = STATE.Ready;
 
@@ -72,11 +85,20 @@ public class GameManager : MonoBehaviour
                 SetSpring(springs[i]);
             }
         }
+        startPanel.SetActive(false);
+        Obj.SetActive(false);
+        signUpObj.SetActive(false);
+        loginObj.SetActive(false);
+        rankingPanel.SetActive(false);
+        loginPanel.SetActive(true);
+        FirebaseManager.instance.AutoLogin();
     }
-
-    Dictionary<Transform, int> before = new Dictionary<Transform, int>();
-    [SerializeField]
-    Transform[] springs;
+    public void LoginSuccese()
+    {
+        loginPanel.SetActive(false);
+        rankingPanel.SetActive(false);
+        startPanel.SetActive(true);
+    }
     public void SetSpring(Transform spring)
     {
         int idx = Random.Range(1, springPos[spring].Length);
@@ -90,11 +112,6 @@ public class GameManager : MonoBehaviour
         before[spring] = idx;
     }
 
-    public void GameStart()
-    {
-        loginPanel.SetActive(false);
-        player.state = STATE.Ready;
-    }
 
     // Update is called once per frame
     void Update()
@@ -109,6 +126,11 @@ public class GameManager : MonoBehaviour
             }
            float ang =  Vector3.Angle(dir, Vector3.forward);
             arrow.transform.rotation = Quaternion.Euler(new Vector3(0, 0, ang * i));
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            PlayerPrefs.DeleteAll();
         }
     }
 
@@ -134,5 +156,45 @@ public class GameManager : MonoBehaviour
     public void OnClickTornado()
     {
         tornado = true;
+    }
+
+    [SerializeField]
+    GameObject signUpObj;
+    [SerializeField]
+    GameObject loginObj;
+    [SerializeField]
+    GameObject rankingPanel;
+    [SerializeField]
+    GameObject Obj;
+    public void OnClick_SignUpBtn()
+    {
+        Obj.SetActive(true);
+        loginObj.SetActive(false);
+        signUpObj.SetActive(true);
+    }
+
+    public void OnClick_LogInBtn()
+    {
+        Obj.SetActive(true);
+        signUpObj.SetActive(false);
+        loginObj.SetActive(true);
+    }
+
+    public void OnClick_PlayBtn()
+    {
+        startCanvas.SetActive(false);
+        player.state = STATE.Ready;
+    }
+
+
+
+    public void GameOver()
+    {
+        startCanvas.SetActive(true);
+    }
+
+    public void OnClick_CloseBtn()
+    {
+        Obj.SetActive(false);
     }
 }
