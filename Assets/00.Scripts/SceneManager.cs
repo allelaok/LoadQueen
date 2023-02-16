@@ -18,6 +18,7 @@ public class SceneManager : MonoBehaviour
     public void OnClick_RankingBtn()
     {
         FirebaseManager.instance.GetRankInfo(AfterGetTopTen);
+        FirebaseManager.instance.GetMyRank(AfterGetMyRank);
     }
 
     public void AfterGetTopTen()
@@ -29,9 +30,12 @@ public class SceneManager : MonoBehaviour
             else
             ranks[i].SetInfo();
         }
+    }
+
+    public void AfterGetMyRank()
+    {
         ranks[10].SetInfo(FirebaseManager.instance.targetRank);
         ranks[11].SetInfo(FirebaseManager.instance.myRank);
-
         rankingPanel.SetActive(true);
     }
 }

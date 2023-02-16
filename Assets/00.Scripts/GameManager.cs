@@ -31,8 +31,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public float Speed { get { return speed; }  set { } }
-    public float baseSpeed { get { return 20; } }
+    public float Speed { get { return speed; }  set { speed = value; } }
+    public float baseSpeed { get { return 5; } }
     public float Interval { get { return interval; } }
     public int LifeCnt { get { return lifeCnt; } }
     public int TornadoCnt { get { return tornadoCnt; } }
@@ -118,13 +118,13 @@ public class GameManager : MonoBehaviour
     {
         if (nowTarget)
         {
-          Vector3 dir =   nowTarget.position- player.transform.position;
+            Vector3 dir = nowTarget.position - player.transform.position;
             int i = 1;
             if (dir.x > 0)
             {
                 i = -1;
             }
-           float ang =  Vector3.Angle(dir, Vector3.forward);
+            float ang = Vector3.Angle(dir, Vector3.forward);
             arrow.transform.rotation = Quaternion.Euler(new Vector3(0, 0, ang * i));
         }
 

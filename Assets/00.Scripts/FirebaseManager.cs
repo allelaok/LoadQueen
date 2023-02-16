@@ -12,7 +12,7 @@ using TMPro;
 
 public class RankInfo
 {
-    public int rank;
+    public long rank;
     public string nickName;
     public int score;
 }
@@ -112,6 +112,7 @@ public class FirebaseManager : MonoBehaviour
                     GetBestScore();
                     GameManager.instance.LoginSuccese();
                     print("·Î±×ÀÎ");
+                    GameManager.instance.userId = userid;
                 }
                 else
                 {
@@ -149,7 +150,9 @@ public class FirebaseManager : MonoBehaviour
                     reference.Child("users").Child(id.text).Child("score").SetValueAsync(0);
                     reference.Child("users").Child(id.text).Child("rank").SetValueAsync(0);
                     GameManager.instance.LoginSuccese();
+                    GetBestScore();
                     print("È¸¿ø°¡ÀÔ ¼º°ø");
+                    GameManager.instance.userId = id.text;
                 }
                 else
                 {
@@ -198,11 +201,10 @@ public class FirebaseManager : MonoBehaviour
                 DataSnapshot snapshot = task.Result;
                 string str = snapshot.Value.ToString();
                 GameManager.instance.bestScore = int.Parse(str);
+                print(GameManager.instance.bestScore);
             }
         });
     }
-    public RankInfo targetRank = new RankInfo();
-    public RankInfo myRank;
     public List<RankInfo> rankInfos = new List<RankInfo>();
     public void GetRankInfo(Action callback)
     {
@@ -215,55 +217,34 @@ public class FirebaseManager : MonoBehaviour
             }
             else if (task.IsCompleted)
             {
-                print("µé¾î¿È1");
                 DataSnapshot snapshot = task.Result;
                 int rank = 0;
+                rankInfos.Clear();
+                long topNum = 10;
+                if(snapshot.ChildrenCount < topNum)
+                {
+                    topNum = snapshot.ChildrenCount;
+                }
+                print(topNum);
                 foreach (DataSnapshot childSnapshot in snapshot.Children.Reverse<DataSnapshot>())
                 {
                     int score = int.Parse(childSnapshot.Child("score").Value.ToString());
                     string nickName = childSnapshot.Key.ToString();
-                    if (rank < 10)
+                    rank++;
+                    if (rank <= topNum)
                     {
                         RankInfo info = new RankInfo();
                         info.nickName = nickName;
                         info.score = score;
-                        info.rank = rank + 1;
-                        print("µé¾î¿È2");
+                        info.rank = rank;
                         rankInfos.Add(info);
-                    }
-
-                    rank++;
-                    print("µé¾î¿È3");
-
-                    if (score > GameManager.instance.bestScore)
-                    {
-                        targetRank.nickName = nickName;
-                        targetRank.score = score;
-                        targetRank.rank = rank;
-                print("µé¾î¿È4");
                     }
                     else
                     {
-                        reference.Child("users").Child(GameManager.instance.userId).Child("rank").SetValueAsync(rank);
-                        myRank = new RankInfo();
-                        myRank.nickName = nickName;
-                        myRank.score = GameManager.instance.bestScore;
-                        myRank.rank = rank;
-                print("µé¾î¿È5");
+                        print("µé¾î¿È3");
                         break;
                     }
-
-
-                    //if ((rank > 10 || ) && myRank != null)
-                    //{
-                    //    print("µé¾î¿È6");
-                    //    break;
-                    //}
-
                 }
-
-                print("µé¾î¿È7");
-                print(rankInfos.Count);
 
                 callback.Invoke();
             }
@@ -271,4 +252,55 @@ public class FirebaseManager : MonoBehaviour
 
     }
 
+    public RankInfo targetRank = new RankInfo();
+    public RankInfo myRank;
+    public void GetMyRank(Action callback)
+    {
+        FirebaseDatabase.DefaultInstance.GetReference("users").OrderByChild("score").GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
+            {
+                // Handle the error...
+                print("½ÇÆÐ");
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                int rank = 0;
+                foreach (DataSnapshot childSnapshot in snapshot.Children.Reverse<DataSnapshot>())
+                {
+                    int score = int.Parse(childSnapshot.Child("score").Value.ToString());
+                    rank++;
+
+                    if (score <= GameManager.instance.bestScore)
+                    {
+                        //reference.Child("users").Child(GameManager.instance.userId).Child("rank").SetValueAsync(rank);
+                        myRank = new RankInfo();
+                        myRank.nickName = GameManager.instance.userId;
+                        myRank.score = GameManager.instance.bestScore;
+                        print("MyRank");
+                        print(GameManager.instance.userId);
+                        print(GameManager.instance.bestScore);
+                        myRank.rank = rank;
+                        break;
+                    }
+
+                    string nickName = childSnapshot.Key.ToString();
+
+                    targetRank.nickName = nickName;
+                    targetRank.score = score;
+                    targetRank.rank = rank;
+
+                }
+               
+            }
+
+            callback.Invoke();
+
+
+        });
+    }
+
+
+   
 }

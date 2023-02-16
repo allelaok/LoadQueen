@@ -66,6 +66,7 @@ public class Player : MonoBehaviour
             case (STATE.Play):
                 Move();
                 InverseTime();
+                SetHeartsPosition(1, 0);
                 break;
             case (STATE.CamMove):
                 CamMove();
@@ -84,7 +85,6 @@ public class Player : MonoBehaviour
 
     private void LateUpdate()
     {
-        SetHeartsPosition(1, 0);
     }
 
     void Ready()
@@ -155,7 +155,7 @@ public class Player : MonoBehaviour
             for (int i = 0; i < hearts.Count; i++)
                 hearts[i].position = Vector3.one * -1;
         }
-        if (points.Count == 1)
+        else if (points.Count == 1)
         {
             float dis = Vector3.Distance(transform.position, points[0]);
             // 플레이어 위치부터 모든 하트 나열
@@ -236,8 +236,10 @@ public class Player : MonoBehaviour
         if (tornado.gameObject.activeSelf == false)
             tornado.gameObject.SetActive(true);
 
+        points.Clear();
+
         transform.Rotate(new Vector3(0, 300 * Time.deltaTime, 0));
-        transform.localScale -= Vector3.one * GameManager.instance.Speed * 0.2f * Time.deltaTime;
+        transform.localScale -= Vector3.one * GameManager.instance.baseSpeed * Time.deltaTime;
         if (transform.localScale.x < 0.1f)
         {
             transform.localScale = initSize;
@@ -283,16 +285,17 @@ public class Player : MonoBehaviour
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
     }
-    //Transform last;
+
     private void OnTriggerEnter(Collider other)
     {
         if (state != STATE.Play) return;
-
+        // 벽과 충돌
         if (other.gameObject.layer == LayerMask.NameToLayer("Wall"))
         {
             DestroyAllHearts();
             dieCnt++;
             lifeImg[GameManager.instance.LifeCnt - dieCnt].enabled = false;
+            GameManager.instance.Speed = GameManager.instance.baseSpeed;
 
             if (dieCnt < GameManager.instance.LifeCnt)
             {
@@ -304,6 +307,7 @@ public class Player : MonoBehaviour
                 GameOver();
             }
         }
+        // 하트
         else if (other.gameObject.layer == LayerMask.NameToLayer("Heart"))
         {
             other.gameObject.layer = LayerMask.NameToLayer("Default");
@@ -312,13 +316,18 @@ public class Player : MonoBehaviour
 
             // 점수 기록
             score += point;
-            GameManager.instance.Speed = GameManager.instance.baseSpeed * (hearts.Count + 1) * 0.2f;
+            GameManager.instance.Speed = GameManager.instance.baseSpeed + (hearts.Count + 1) * 0.2f;
+            print(GameManager.instance.Speed);
             if (score > GameManager.instance.bestScore)
+            {
+                GameManager.instance.bestScore = score;
                 bestScoreText.text = score.ToString();
+            }
             scoreText.text = score.ToString();
 
             CreateHeart();
         }
+        // 함정
         else if (other.gameObject.layer == LayerMask.NameToLayer("RedCapsule"))
         {
             inversedTime = 0;
@@ -326,10 +335,12 @@ public class Player : MonoBehaviour
             anim.SetInteger("Inverse", inverse);
             GameManager.instance.SetSpring(other.transform);
         }
+        // 지하철
         else if (other.gameObject.layer == LayerMask.NameToLayer("Subway"))
         {
             SelectSubway(other.transform);
         }
+        // 계단
         else if (other.gameObject.layer == LayerMask.NameToLayer("Stair"))
         {
             Stair stair = other.transform.GetComponent<Stair>();
@@ -412,7 +423,7 @@ public class Player : MonoBehaviour
         {
             idx = Random.Range(1, heartPos.Length);
         }
-
+        beforePosIndx = idx;
         Transform heartPrefab = heartPool.transform.GetChild(0);
         heartPrefab.SetParent(null, true);
         heartPrefab.position = heartPos[idx].position;
