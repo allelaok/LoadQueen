@@ -8,30 +8,27 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1098516515516:android:b6e5d44ec4548ff07e5eb9",
+        "mobilesdk_app_id": "1:1098516515516:ios:fa68f94a00a83b5e7e5eb9",
         "android_client_info": {
           "package_name": "com.SoLa.LoadQueen"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1098516515516-ghhb6f7o4m0e0pme6i3dk6sf00b6rhnu.apps.googleusercontent.com",
-          "client_type": 3
+          "client_id": "1098516515516-euqfkv1isqf99lulnjigm0nhm9len5a0.apps.googleusercontent.com"
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyD0JLQjJ3534gZzrG2wngV04GesQZoM2lE"
+          "current_key": "AIzaSyDkqdHVRcpednHCgWdHhC6RXMqX2k4zr6Q"
         }
       ],
       "services": {
+        "analytics_service": {
+          "status": 0
+        },
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1098516515516-ghhb6f7o4m0e0pme6i3dk6sf00b6rhnu.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "status": 1
         }
       }
     }

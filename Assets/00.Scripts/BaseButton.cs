@@ -32,4 +32,5 @@ public class BaseButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         image.enabled = false;
 
     }
+
 }
