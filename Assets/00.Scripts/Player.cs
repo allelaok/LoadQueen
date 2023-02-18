@@ -119,7 +119,7 @@ public class Player : MonoBehaviour
     List<int> targetIndx = new List<int>();
     public void Move()
     {
-        transform.position += transform.forward.normalized * GameManager.instance.Speed * Time.deltaTime;
+        transform.position += transform.forward * GameManager.instance.Speed * Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.A) || GameManager.instance.turnLeft)
         {
@@ -264,7 +264,7 @@ public class Player : MonoBehaviour
     Transform target;
     void CamMove()
     {
-        transform.position += (target.position - transform.position).normalized * GameManager.instance.Speed * 10 * Time.deltaTime;
+        transform.position += (target.position - transform.position) * GameManager.instance.baseSpeed * 2 * Time.deltaTime;
 
         if (Vector3.Distance(transform.position, target.position) < 0.5f)
         {
