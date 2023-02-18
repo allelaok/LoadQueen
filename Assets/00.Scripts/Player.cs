@@ -110,7 +110,7 @@ public class Player : MonoBehaviour
         targetIndx.Clear();
         points.Clear();
         points.Add(transform.position);
-        score = 0;
+        //target.Clear();
         inverse = 1;
         GameManager.instance.Speed = GameManager.instance.baseSpeed;
     }
@@ -119,7 +119,7 @@ public class Player : MonoBehaviour
     List<int> targetIndx = new List<int>();
     public void Move()
     {
-        transform.position += transform.forward.normalized * GameManager.instance.Speed * Time.deltaTime;
+        transform.position += transform.forward * GameManager.instance.Speed * Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.A) || GameManager.instance.turnLeft)
         {
@@ -141,7 +141,6 @@ public class Player : MonoBehaviour
             if(tornadoCnt > 0)
             {
                 tornadoImg[tornadoCnt].enabled = false;
-                points.Clear();
                 state = STATE.Tornado;
             }
             GameManager.instance.tornado = false;
@@ -152,23 +151,25 @@ public class Player : MonoBehaviour
     {
         if(points.Count == 0)
         {
-            // ???? ???? ???????? ??????
+            // 모든 하트 안보이는 곳으로
             for (int i = 0; i < hearts.Count; i++)
                 hearts[i].position = Vector3.one * -1;
         }
         else if (points.Count == 1)
         {
             float dis = Vector3.Distance(transform.position, points[0]);
-            // ???????? ???????? ???? ???? ????
+            // 플레이어 위치부터 모든 하트 나열
             for (int i = 0; i < hearts.Count; i++)
             {
-                if (dis > GameManager.instance.Interval * (i + 1))
-                    hearts[i].position = transform.position - transform.forward * GameManager.instance.Interval * (i + 1);
+                if (dis > 2 * (i + 1) * 0.5f)
+                    hearts[i].position = transform.position - transform.forward * 2 * (i + 1) * 0.5f;
+                else
+                    hearts[i].position = Vector3.one * -1;
             }
         }
         else if (points.Count > pointIdx - 1 && hearts.Count > heartIdx)
         {
-            // ???? ???????? ???? ???????? ????
+            // 현재 포인트와 다음 포인트의 거리
             float dis;
             if (pointDis)
             {
@@ -182,13 +183,13 @@ public class Player : MonoBehaviour
                 dis = Vector3.Distance(hearts[heartIdx - 1].position, points[points.Count - pointIdx]);
             }
 
-            // ?????? ?????? ????
-            if (dis < GameManager.instance.Interval - tmpDis)
+            // 거리가 부족한 경우
+            if (dis < 2 * 0.5f - tmpDis)
             {
                 pointIdx++;
                 SetHeartsPosition(pointIdx, heartIdx, true, dis + tmpDis);
             }
-            // ?????? ?????? ????
+            // 거리를 충족한 경우
             else
             {
                 Vector3 pos;
@@ -197,12 +198,12 @@ public class Player : MonoBehaviour
                 {
                     if (pointIdx == 1)
                     {
-                        pos = Vector3.Lerp(transform.position, points[points.Count - pointIdx], (GameManager.instance.Interval - tmpDis) / dis);
+                        pos = Vector3.Lerp(transform.position, points[points.Count - pointIdx], (2 * 0.5f - tmpDis) / dis);
                         forword = transform.position - points[points.Count - pointIdx];
                     }
                     else
                     {
-                        pos = Vector3.Lerp(points[points.Count - pointIdx + 1], points[points.Count - pointIdx], (GameManager.instance.Interval - tmpDis) / dis);
+                        pos = Vector3.Lerp(points[points.Count - pointIdx + 1], points[points.Count - pointIdx], (2 * 0.5f - tmpDis) / dis);
                         forword = points[points.Count - pointIdx + 1] - points[points.Count - pointIdx];
 
                     }
@@ -213,7 +214,7 @@ public class Player : MonoBehaviour
                     forword = hearts[heartIdx - 1].forward;
                 }
 
-                // ???? ????
+                // 하트 배치
                 hearts[heartIdx].position = pos;
                 hearts[heartIdx].forward = forword;
                 heartIdx++;
@@ -221,7 +222,7 @@ public class Player : MonoBehaviour
                     SetHeartsPosition(pointIdx, heartIdx, false);
                 else
                 {
-                    // ?????? ?????? ????
+                    // 나머지 포인트 삭제
                     for (int i = points.Count - pointIdx - 1; i > -1; i--)
                     {
                         points.RemoveAt(i);
@@ -234,6 +235,9 @@ public class Player : MonoBehaviour
     {
         if (tornado.gameObject.activeSelf == false)
             tornado.gameObject.SetActive(true);
+
+        points.Clear();
+
         transform.Rotate(new Vector3(0, 300 * Time.deltaTime, 0));
         transform.localScale -= Vector3.one * GameManager.instance.baseSpeed * Time.deltaTime;
         if (transform.localScale.x < 0.1f)
@@ -247,7 +251,6 @@ public class Player : MonoBehaviour
     void SelectSubway(Transform beforeSubway = null)
     {
         transform.GetComponentInChildren<SpriteRenderer>().enabled = false;
-
         int subwayIdx = Random.Range(1, subways.Length);
         if (beforeSubway != null)
         {
@@ -258,6 +261,7 @@ public class Player : MonoBehaviour
         }
         subways[subwayIdx].gameObject.layer = LayerMask.NameToLayer("SelectedSubway");
         target = subways[subwayIdx];
+        points.Clear();
         state = STATE.CamMove;
     }
 
@@ -285,7 +289,7 @@ public class Player : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (state != STATE.Play) return;
-        // ???? ????
+        // 벽과 충돌
         if (other.gameObject.layer == LayerMask.NameToLayer("Wall"))
         {
             DestroyAllHearts();
@@ -303,14 +307,14 @@ public class Player : MonoBehaviour
                 GameOver();
             }
         }
-        // ????
+        // 하트
         else if (other.gameObject.layer == LayerMask.NameToLayer("Heart"))
         {
-            other.gameObject.layer = LayerMask.NameToLayer("Wall");
-            print(other.gameObject.name);
+            other.gameObject.layer = LayerMask.NameToLayer("Default");
+
             hearts.Add(other.transform);
 
-            // ???? ????
+            // 점수 기록
             score += point;
             GameManager.instance.Speed = GameManager.instance.baseSpeed + (hearts.Count + 1) * 0.2f;
             print(GameManager.instance.Speed);
@@ -323,7 +327,7 @@ public class Player : MonoBehaviour
 
             CreateHeart();
         }
-        // ????
+        // 함정
         else if (other.gameObject.layer == LayerMask.NameToLayer("RedCapsule"))
         {
             inversedTime = 0;
@@ -331,13 +335,12 @@ public class Player : MonoBehaviour
             anim.SetInteger("Inverse", inverse);
             GameManager.instance.SetSpring(other.transform);
         }
-        // ??????
+        // 지하철
         else if (other.gameObject.layer == LayerMask.NameToLayer("Subway"))
         {
-            points.Clear();
             SelectSubway(other.transform);
         }
-        // ????
+        // 계단
         else if (other.gameObject.layer == LayerMask.NameToLayer("Stair"))
         {
             Stair stair = other.transform.GetComponent<Stair>();
@@ -370,7 +373,7 @@ public class Player : MonoBehaviour
         {
             inverseTime = 5f;
             animSprite.color = new Color(1, 1, 1, 1);
-            //anim.SetInteger("Inverse", inverse);
+            anim.SetInteger("Inverse", inverse);
             return;
         }
 
@@ -380,7 +383,7 @@ public class Player : MonoBehaviour
         {
             animSprite.color = new Color(1, 1, 1, 1);
             inverse = 1;
-            //anim.SetInteger("Inverse", inverse);
+            anim.SetInteger("Inverse", inverse);
         }
         else
         {

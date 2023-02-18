@@ -50,12 +50,12 @@ public class FirebaseManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(id.text))
         {
-            print("id null");
+            print("아이디를 입력해 주세요");
             return;
         }
         else if (string.IsNullOrEmpty(password.text))
         {
-            print("password null");
+            print("비밀번호를 입력해 주세요");
             return;
         }
 
@@ -63,7 +63,6 @@ public class FirebaseManager : MonoBehaviour
         {
             if (task.IsFaulted)
             {
-                print("login error");
             }
             else if (task.IsCompleted)
             {
@@ -71,15 +70,16 @@ public class FirebaseManager : MonoBehaviour
                 if ((string)snapshot.Value == password.text)
                 {
                     GameManager.instance.userId = id.text;
+                    GetBestScore();
 
                     PlayerPrefs.SetString("userId", id.text);
                     PlayerPrefs.SetString("password", password.text);
                     GameManager.instance.LoginSuccese();
-                    print("login sucssece");
+                    print("로그인");
                 }
                 else
                 {
-                    print("login fail.");
+                    print("비밀번호가 틀렸습니다.");
                 }
             }
         });
@@ -109,13 +109,14 @@ public class FirebaseManager : MonoBehaviour
                 DataSnapshot snapshot = task.Result;
                 if ((string)snapshot.Value == password)
                 {
+                    GetBestScore();
                     GameManager.instance.LoginSuccese();
-                    print("auto login sucssece");
+                    print("로그인");
                     GameManager.instance.userId = userid;
                 }
                 else
                 {
-                    print("auto login fail.");
+                    print("비밀번호가 틀렸습니다.");
                 }
             }
         });
@@ -125,12 +126,12 @@ public class FirebaseManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(id.text))
         {
-            print("id null");
+            print("아이디를 입력해 주세요");
             return;
         }
         else if (string.IsNullOrEmpty(password.text))
         {
-            print("password null");
+            print("비밀번호를 입력해 주세요");
             return;
         }
 
@@ -138,12 +139,10 @@ public class FirebaseManager : MonoBehaviour
         {
             if (task.IsFaulted)
             {
-                print("sign up error");
                 // Handle the error...
             }
             else if (task.IsCompleted)
             {
-                print("sign up 1");
                 DataSnapshot snapshot = task.Result;
                 if (string.IsNullOrEmpty((string)snapshot.Value))
                 {
@@ -151,12 +150,13 @@ public class FirebaseManager : MonoBehaviour
                     reference.Child("users").Child(id.text).Child("score").SetValueAsync(0);
                     reference.Child("users").Child(id.text).Child("rank").SetValueAsync(0);
                     GameManager.instance.LoginSuccese();
+                    GetBestScore();
+                    print("회원가입 성공");
                     GameManager.instance.userId = id.text;
-                    print("sucssese");
                 }
                 else
                 {
-                    print("already exist");
+                    print("이미 사용중인 아이디");
                 }
             }
         });
@@ -168,7 +168,7 @@ public class FirebaseManager : MonoBehaviour
             if (task.IsFaulted)
             {
                 // Handle the error...
-                print("save score error");
+                print("실패");
                 reference.Child("users").Child(GameManager.instance.userId).Child("score").SetValueAsync(score);
             }
             else if (task.IsCompleted)
@@ -177,7 +177,7 @@ public class FirebaseManager : MonoBehaviour
                 string str = snapshot.Value.ToString();
                 if (int.Parse(str) < score)
                 {
-                    print("Save Score!");
+                    print("신기록 달성!");
                     reference.Child("users").Child(GameManager.instance.userId).Child("score").SetValueAsync(score);
                 }
 
@@ -187,22 +187,21 @@ public class FirebaseManager : MonoBehaviour
 
     }
 
-    public void GetBestScore(Action callback)
+    public void GetBestScore()
     {
         reference.Child("users").Child(GameManager.instance.userId).Child("score").GetValueAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsFaulted)
             {
                 // Handle the error...
-                print("get bestScore error");
+                print("실패");
             }
             else if (task.IsCompleted)
             {
                 DataSnapshot snapshot = task.Result;
                 string str = snapshot.Value.ToString();
                 GameManager.instance.bestScore = int.Parse(str);
-                print("sucssese my best score");
-                callback.Invoke();
+                print(GameManager.instance.bestScore);
             }
         });
     }
@@ -214,7 +213,7 @@ public class FirebaseManager : MonoBehaviour
             if (task.IsFaulted)
             {
                 // Handle the error...
-                print("get rank error");
+                print("실패");
             }
             else if (task.IsCompleted)
             {
@@ -242,7 +241,7 @@ public class FirebaseManager : MonoBehaviour
                     }
                     else
                     {
-                        print("break");
+                        print("들어옴3");
                         break;
                     }
                 }
@@ -262,7 +261,7 @@ public class FirebaseManager : MonoBehaviour
             if (task.IsFaulted)
             {
                 // Handle the error...
-                print("get my rank error");
+                print("실패");
             }
             else if (task.IsCompleted)
             {

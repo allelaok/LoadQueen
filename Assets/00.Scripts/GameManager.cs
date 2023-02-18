@@ -44,7 +44,7 @@ public class GameManager : MonoBehaviour
     float speed = 2f;
     int lifeCnt = 3;
     int tornadoCnt = 3;
-    float interval = 1.5f;
+    float interval = 0.2f;
     public int bestScore;
 
     [SerializeField]
@@ -127,6 +127,7 @@ public class GameManager : MonoBehaviour
             float ang = Vector3.Angle(dir, Vector3.forward);
             arrow.transform.rotation = Quaternion.Euler(new Vector3(0, 0, ang * i));
         }
+
         if (Input.GetKeyDown(KeyCode.R))
         {
             PlayerPrefs.DeleteAll();
@@ -145,6 +146,7 @@ public class GameManager : MonoBehaviour
     public bool tornado;
     public void OnClickLeftBtn()
     {
+        print("emfdj");
         turnLeft = true;
     }
     public void OnClickRightBtn()
@@ -180,12 +182,6 @@ public class GameManager : MonoBehaviour
 
     public void OnClick_PlayBtn()
     {
-        FirebaseManager.instance.GetBestScore(EndGetMyScore);
-    }
-
-    void EndGetMyScore()
-    {
-
         startCanvas.SetActive(false);
         player.state = STATE.Ready;
     }
