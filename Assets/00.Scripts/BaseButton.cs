@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class BaseButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class BaseButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField]
     Image image;
@@ -31,6 +31,11 @@ public class BaseButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     {
         image.enabled = false;
 
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        image.enabled = false;
     }
 
 }

@@ -69,6 +69,7 @@
     <Compile Include="Assets/00.Scripts/BlackHeart.cs" />
     <Compile Include="Assets/00.Scripts/Heart.cs" />
     <Compile Include="Assets/00.Scripts/Obsolete/PlayerTest.cs" />
+    <Compile Include="Assets/00.Scripts/SoundManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />
@@ -364,11 +365,11 @@
     <Reference Include="Firebase.TaskExtension">
       <HintPath>Assets/Firebase/Plugins/Firebase.TaskExtension.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Burst.Cecil">
-      <HintPath>Library/PackageCache/com.unity.burst@1.8.2/Unity.Burst.CodeGen/Unity.Burst.Cecil.dll</HintPath>
-    </Reference>
     <Reference Include="Google.MiniJson">
       <HintPath>Assets/Firebase/Plugins/Google.MiniJson.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Burst.Cecil">
+      <HintPath>Library/PackageCache/com.unity.burst@1.8.2/Unity.Burst.CodeGen/Unity.Burst.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Burst.Cecil.Rocks">
       <HintPath>Library/PackageCache/com.unity.burst@1.8.2/Unity.Burst.CodeGen/Unity.Burst.Cecil.Rocks.dll</HintPath>

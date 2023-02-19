@@ -48,16 +48,9 @@ public class FirebaseManager : MonoBehaviour
 
     public void SingIn()
     {
-        if (string.IsNullOrEmpty(id.text))
-        {
-            print("id null");
-            return;
-        }
-        else if (string.IsNullOrEmpty(password.text))
-        {
-            print("password null");
-            return;
-        }
+        if (ExceptedString(id.text, password.text)) return;
+
+        GameManager.instance.userId = id.text;
 
         reference.Child("users").Child(id.text).Child("password").GetValueAsync().ContinueWithOnMainThread(task =>
         {
@@ -70,10 +63,11 @@ public class FirebaseManager : MonoBehaviour
                 DataSnapshot snapshot = task.Result;
                 if ((string)snapshot.Value == password.text)
                 {
-                    GameManager.instance.userId = id.text;
 
                     PlayerPrefs.SetString("userId", id.text);
                     PlayerPrefs.SetString("password", password.text);
+                    id.text = "";
+                    password.text = "";
                     GameManager.instance.LoginSuccese();
                     print("login sucssece");
                 }
@@ -90,14 +84,9 @@ public class FirebaseManager : MonoBehaviour
         string userid = PlayerPrefs.GetString("userId");
         string password = PlayerPrefs.GetString("password");
 
-        if (string.IsNullOrEmpty(userid))
-        {
-            return;
-        }
-        else if (string.IsNullOrEmpty(password))
-        {
-            return;
-        }
+        if (ExceptedString(userid, password)) return;
+  
+        GameManager.instance.userId = userid;
 
         reference.Child("users").Child(userid).Child("password").GetValueAsync().ContinueWithOnMainThread(task =>
         {
@@ -111,7 +100,6 @@ public class FirebaseManager : MonoBehaviour
                 {
                     GameManager.instance.LoginSuccese();
                     print("auto login sucssece");
-                    GameManager.instance.userId = userid;
                 }
                 else
                 {
@@ -121,18 +109,39 @@ public class FirebaseManager : MonoBehaviour
         });
     }
 
-    public void SingUp()
+    bool ExceptedString(string id, string password)
     {
-        if (string.IsNullOrEmpty(id.text))
+        if (string.IsNullOrEmpty(id))
         {
             print("id null");
-            return;
+            return true;
         }
-        else if (string.IsNullOrEmpty(password.text))
+        else if (id.Contains(".") | id.Contains("$")| id.Contains("[") | id.Contains("]"))
+        {
+            print("id error");
+            return true;
+        }
+        else if (string.IsNullOrEmpty(password))
         {
             print("password null");
-            return;
+            return true;
         }
+        else if (password.Contains(".") | password.Contains("$") | password.Contains("[") | password.Contains("]"))
+        {
+            print("password error");
+            return true;
+        }
+
+        return false;
+
+    }
+
+
+    public void SingUp()
+    {
+        if (ExceptedString(id.text, password.text)) return;
+
+        GameManager.instance.userId = id.text;
 
         reference.Child("users").Child(id.text).Child("password").GetValueAsync().ContinueWithOnMainThread(task =>
         {
@@ -149,9 +158,9 @@ public class FirebaseManager : MonoBehaviour
                 {
                     reference.Child("users").Child(id.text).Child("password").SetValueAsync(password.text);
                     reference.Child("users").Child(id.text).Child("score").SetValueAsync(0);
-                    reference.Child("users").Child(id.text).Child("rank").SetValueAsync(0);
-                    GameManager.instance.LoginSuccese();
-                    GameManager.instance.userId = id.text;
+                    GameManager.instance.OnClick_CloseBtn();
+                    id.text = "";
+                    password.text = "";
                     print("sucssese");
                 }
                 else
@@ -189,6 +198,7 @@ public class FirebaseManager : MonoBehaviour
 
     public void GetBestScore(Action callback)
     {
+
         reference.Child("users").Child(GameManager.instance.userId).Child("score").GetValueAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsFaulted)
@@ -226,18 +236,28 @@ public class FirebaseManager : MonoBehaviour
                 {
                     topNum = snapshot.ChildrenCount;
                 }
-                print(topNum);
+                int beforeScore = 0;
+                int beforeRank = 0;
                 foreach (DataSnapshot childSnapshot in snapshot.Children.Reverse<DataSnapshot>())
                 {
                     int score = int.Parse(childSnapshot.Child("score").Value.ToString());
                     string nickName = childSnapshot.Key.ToString();
+
                     rank++;
                     if (rank <= topNum)
                     {
                         RankInfo info = new RankInfo();
                         info.nickName = nickName;
                         info.score = score;
-                        info.rank = rank;
+                        if (beforeScore == score)
+                            info.rank = beforeRank;
+                        else
+                        {
+                            info.rank = rank;
+                            beforeScore = score;
+                            beforeRank = rank;
+                        }
+
                         rankInfos.Add(info);
                     }
                     else

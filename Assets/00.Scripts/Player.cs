@@ -34,8 +34,8 @@ public class Player : MonoBehaviour
     public Camera cam;
     [SerializeField]
     Transform tornado;
-    [SerializeField]
-    Animator anim;
+    //[SerializeField]
+    //Animator anim;
     Vector3 initSize;
     int inverse = 1;
     //public Transform[] hearts;
@@ -119,33 +119,46 @@ public class Player : MonoBehaviour
     List<int> targetIndx = new List<int>();
     public void Move()
     {
-        transform.position += transform.forward.normalized * GameManager.instance.Speed * Time.deltaTime;
+        transform.position += transform.forward * GameManager.instance.Speed * Time.deltaTime;
 
-        if (Input.GetKeyDown(KeyCode.A) || GameManager.instance.turnLeft)
+        if (target)
         {
-            transform.rotation *= Quaternion.Euler(new Vector3(0, -1 * inverse * 45, 0));
-            points.Add(transform.position);
-
-            GameManager.instance.turnLeft = false;
-        }
-        else if(Input.GetKeyDown(KeyCode.D) || GameManager.instance.turnRight)
-        {
-            transform.rotation *= Quaternion.Euler(new Vector3(0, inverse * 45, 0));
-            points.Add(transform.position);
-
-            GameManager.instance.turnRight = false;
-        }
-        else if (Input.GetKeyDown(KeyCode.Space) || GameManager.instance.tornado)
-        {
-            tornadoCnt--;
-            if(tornadoCnt > 0)
+            if (Vector3.Distance(transform.position, target.position) > 2.5f)
             {
-                tornadoImg[tornadoCnt].enabled = false;
-                points.Clear();
-                state = STATE.Tornado;
+                target = null;
             }
-            GameManager.instance.tornado = false;
         }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.A) || GameManager.instance.turnLeft)
+            {
+                transform.rotation *= Quaternion.Euler(new Vector3(0, -1 * inverse * 45, 0));
+                points.Add(transform.position);
+
+                GameManager.instance.turnLeft = false;
+            }
+            else if (Input.GetKeyDown(KeyCode.D) || GameManager.instance.turnRight)
+            {
+                transform.rotation *= Quaternion.Euler(new Vector3(0, inverse * 45, 0));
+                points.Add(transform.position);
+
+                GameManager.instance.turnRight = false;
+            }
+            else if (Input.GetKeyDown(KeyCode.Space) || GameManager.instance.tornado)
+            {
+                if (tornadoCnt > 0)
+                {
+                    tornadoImg[tornadoCnt - 1].enabled = false;
+                    points.Clear();
+                    state = STATE.Tornado;
+                    tornadoCnt--;
+                }
+                GameManager.instance.tornado = false;
+            }
+
+        }
+
+       
     }
 
     void SetHeartsPosition(int pointIdx, int heartIdx, bool pointDis = true, float tmpDis = 0)
@@ -256,7 +269,6 @@ public class Player : MonoBehaviour
                 subwayIdx = Random.Range(1, subways.Length);
             }
         }
-        subways[subwayIdx].gameObject.layer = LayerMask.NameToLayer("SelectedSubway");
         target = subways[subwayIdx];
         state = STATE.CamMove;
     }
@@ -282,10 +294,11 @@ public class Player : MonoBehaviour
         transform.rotation = Quaternion.identity;
     }
 
+
     private void OnTriggerEnter(Collider other)
     {
         if (state != STATE.Play) return;
-        // ???? ????
+        // ???? ??
         if (other.gameObject.layer == LayerMask.NameToLayer("Wall"))
         {
             DestroyAllHearts();
@@ -328,37 +341,32 @@ public class Player : MonoBehaviour
         {
             inversedTime = 0;
             inverse = -1;
-            anim.SetInteger("Inverse", inverse);
+            //anim.SetInteger("Inverse", inverse);
             GameManager.instance.SetSpring(other.transform);
         }
         // ??????
         else if (other.gameObject.layer == LayerMask.NameToLayer("Subway"))
         {
+            if(target == other.transform)
+            {
+                return;
+            }
             points.Clear();
             SelectSubway(other.transform);
         }
         // ????
         else if (other.gameObject.layer == LayerMask.NameToLayer("Stair"))
         {
+            if (target == other.transform)
+            {
+                return;
+            }
             Stair stair = other.transform.GetComponent<Stair>();
-            stair.otherStair.gameObject.layer = LayerMask.NameToLayer("SelectedStair");
             transform.GetComponentInChildren<SpriteRenderer>().enabled = false;
             target = stair.otherStair.transform;
             points.Clear();
+
             state = STATE.CamMove;
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.layer == LayerMask.NameToLayer("SelectedSubway"))
-        {
-            other.gameObject.layer = LayerMask.NameToLayer("Subway");
-        }
-
-        if (other.gameObject.layer == LayerMask.NameToLayer("SelectedStair"))
-        {
-            other.gameObject.layer = LayerMask.NameToLayer("Stair");
         }
     }
 
