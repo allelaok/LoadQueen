@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1098516515516",
+    "firebase_url": "https://queenroad-601e2-default-rtdb.firebaseio.com",
+    "project_id": "queenroad-601e2",
+    "storage_bucket": "queenroad-601e2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098516515516:android:b6e5d44ec4548ff07e5eb9",
+        "android_client_info": {
+          "package_name": "com.SoLa.LoadQueen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1098516515516-ghhb6f7o4m0e0pme6i3dk6sf00b6rhnu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0JLQjJ3534gZzrG2wngV04GesQZoM2lE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1098516515516-ghhb6f7o4m0e0pme6i3dk6sf00b6rhnu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1098516515516-euqfkv1isqf99lulnjigm0nhm9len5a0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.SoLa.LoadQueen"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

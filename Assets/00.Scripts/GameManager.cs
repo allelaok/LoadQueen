@@ -20,7 +20,6 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     private void Awake()
     {
-        Screen.SetResolution(1080, 1920, false);
         if (instance == null)
         {
             instance = this;
